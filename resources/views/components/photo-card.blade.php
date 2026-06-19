@@ -8,7 +8,7 @@
 <div class="group relative bg-surface rounded-lg overflow-hidden border border-border hover:border-border-light transition-colors">
     <div class="aspect-[4/3] bg-surface-alt flex items-center justify-center">
         <img
-            src="{{ asset($photo->path) }}"
+            src="{{ Storage::disk('shared')->url($photo->path) }}"
             alt=""
             class="w-full h-full object-cover"
             loading="lazy"

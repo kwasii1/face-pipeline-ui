@@ -1,10 +1,14 @@
 <?php
 
+use App\Jobs\ClusterUnassignedJob;
+use App\Jobs\ProcessPhotoJob;
 use App\Models\Photo;
+use App\Models\PhotoBatch;
 use App\Models\Project;
-use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Bus;
 
 new
 #[Layout('layouts::dashboard-layout')]
@@ -25,18 +29,58 @@ class extends Component
 
     public function updatedNewPhotos(): void
     {
-        $batch = $this->project->photoBatches()->latest()->first();
+        $batch = $this->project->photoBatches()
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
 
-        foreach ($this->newPhotos as $file) {
-            Photo::create([
+        if (! $batch) {
+            $batch = PhotoBatch::create([
                 'project_id' => $this->project->id,
-                'batch_id' => $batch?->id,
-                'path' => $file->store('photos', 'public'),
+                'total_photos' => 0,
+                'processed_photos' => 0,
                 'status' => 'pending',
             ]);
         }
 
+        foreach ($this->newPhotos as $file) {
+            $path = $file->store('photos', 'shared');
+
+            Photo::create([
+                'project_id' => $this->project->id,
+                'batch_id' => $batch->id,
+                'path' => $path,
+                'status' => 'pending',
+            ]);
+        }
+
+        $photoIds = Photo::where('batch_id', $batch->id)
+            ->where('status', 'pending')
+            ->pluck('id');
+
+        $photoCount = $photoIds->count();
+        $batch->update([
+            'total_photos' => $photoCount,
+            'status' => 'processing',
+        ]);
+
+        $photoChunks = Photo::whereIn('id', $photoIds)->get();
+        $jobs = $photoChunks->map(fn (Photo $photo) => new ProcessPhotoJob($batch, $photo))->all();
+
+        Bus::batch($jobs)
+            ->then(function () use ($batch) {
+                $batch->update(['status' => 'completed']);
+                ClusterUnassignedJob::dispatch($batch);
+            })
+            ->catch(function () use ($batch) {
+                $batch->update(['status' => 'failed']);
+            })
+            ->onQueue('default')
+            ->dispatch();
+
         $this->newPhotos = [];
+
+        $this->photos = Photo::where('batch_id', $batch->id)->latest()->get();
     }
 };
 ?>
@@ -55,10 +99,10 @@ class extends Component
             @foreach ($photos as $photo)
                 <div class="relative bg-surface rounded-lg overflow-hidden border border-border">
                     <div class="aspect-[4/3] bg-surface-alt flex items-center justify-center">
-                        <img src="{{ asset($photo->path) }}" alt="" class="w-full h-full object-cover" loading="lazy" />
+                        <img src="{{ Storage::disk('shared')->url($photo->path) }}" alt="" class="w-full h-full object-cover" loading="lazy" />
                     </div>
                     <span class="absolute top-2 left-2 px-2 py-0.5 bg-bg/80 backdrop-blur-sm rounded text-[10px] font-mono uppercase tracking-wider text-text-faint">
-                        Queued
+                        {{ $photo->status }}
                     </span>
                 </div>
             @endforeach

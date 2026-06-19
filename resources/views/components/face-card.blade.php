@@ -13,7 +13,7 @@
 >
     <div class="aspect-square bg-surface-alt flex items-center justify-center">
         <img
-            src="{{ asset($face->crop_path) }}"
+            src="{{ Storage::disk('shared')->url($face->crop_path) }}"
             alt="Face crop"
             class="w-full h-full object-cover"
             loading="lazy"

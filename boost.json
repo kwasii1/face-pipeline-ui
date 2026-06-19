@@ -9,8 +9,10 @@
     "sail": false,
     "skills": [
         "laravel-best-practices",
+        "configuring-horizon",
         "livewire-development",
         "pest-testing",
-        "tailwindcss-development"
+        "tailwindcss-development",
+        "echo-development"
     ]
 }

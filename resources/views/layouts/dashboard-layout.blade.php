@@ -17,7 +17,6 @@
             $project = $projectParam instanceof \App\Models\Project
                 ? $projectParam
                 : ($projectParam ? \App\Models\Project::find($projectParam) : null);
-            $batch = $project?->photoBatches()->latest()->first();
             $currentRoute = request()->route()?->getName();
         @endphp
 
@@ -31,13 +30,8 @@
                 <span class="font-mono text-xs text-text-muted truncate hidden sm:inline">{{ $project->name }}</span>
             @endif
             <div class="flex-1"></div>
-            @if ($batch)
-                <x-progress-bar
-                    :current="$batch->processed_photos"
-                    :total="$batch->total_photos"
-                    :status="$batch->status"
-                    class="w-32 md:w-40"
-                />
+            @if ($project)
+                <livewire:batch-progress :$project class="w-32 md:w-40" />
             @endif
         </header>
 

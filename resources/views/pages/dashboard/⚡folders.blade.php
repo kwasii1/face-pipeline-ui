@@ -91,7 +91,7 @@ class extends Component
             @foreach ($results as $photo)
                 <div class="bg-surface rounded-lg overflow-hidden border border-border">
                     <div class="aspect-[4/3] bg-surface-alt flex items-center justify-center">
-                        <img src="{{ asset($photo->path) }}" alt="" class="w-full h-full object-cover" loading="lazy" />
+                        <img src="{{ Storage::disk('shared')->url($photo->path) }}" alt="" class="w-full h-full object-cover" loading="lazy" />
                     </div>
                     <div class="p-2">
                         <div class="flex flex-wrap gap-1">

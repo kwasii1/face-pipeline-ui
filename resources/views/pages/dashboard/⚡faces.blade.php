@@ -129,7 +129,7 @@ class extends Component
                 <div class="p-5 space-y-4">
                     <div class="aspect-square bg-surface-alt rounded overflow-hidden">
                         <img
-                            src="{{ asset($selectedFace->crop_path) }}"
+                            src="{{ Storage::disk('shared')->url($selectedFace->crop_path) }}"
                             alt="Face crop"
                             class="w-full h-full object-cover"
                         />
