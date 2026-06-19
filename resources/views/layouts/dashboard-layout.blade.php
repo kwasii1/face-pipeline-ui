@@ -116,6 +116,16 @@
             </nav>
         @endif
 
+        <x-toast-container />
+
+        <script>
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('toast', (params) => {
+                window.dispatchEvent(new CustomEvent('toast', { detail: params }))
+            })
+        })
+        </script>
+
         @livewireScripts
     </body>
 </html>

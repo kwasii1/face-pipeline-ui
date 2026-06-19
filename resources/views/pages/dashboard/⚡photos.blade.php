@@ -18,6 +18,8 @@ class extends Component
     public function deletePhoto(string $id): void
     {
         Photo::find($id)?->delete();
+
+        $this->dispatch('toast', message: 'Photo deleted.', type: 'success');
     }
 };
 ?>

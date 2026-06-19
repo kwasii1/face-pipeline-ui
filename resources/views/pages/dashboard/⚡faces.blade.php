@@ -39,13 +39,17 @@ class extends Component
             ['project_id' => $this->project->id, 'name' => $name],
         );
 
+        $count = 1;
+
         if ($this->selectedFace->cluster_id) {
-            Face::where('cluster_id', $this->selectedFace->cluster_id)
+            $count = Face::where('cluster_id', $this->selectedFace->cluster_id)
                 ->whereNull('person_id')
-                ->update(['person_id' => $person->id]);
+                ->update(['person_id' => $person->id]) + 1;
         } else {
             $this->selectedFace->update(['person_id' => $person->id]);
         }
+
+        $this->dispatch('toast', message: $count > 1 ? "{$count} faces tagged as {$name}." : "Face tagged as {$name}.", type: 'success');
 
         $this->selectedFace = null;
         $this->tagName = '';

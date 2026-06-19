@@ -1,0 +1,292 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Face Pipeline Service",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/process-photo": {
+      "post": {
+        "summary": "Process Photo",
+        "operationId": "process_photo_process_photo_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcessPhotoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessPhotoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cluster-unassigned": {
+      "post": {
+        "summary": "Cluster Unassigned",
+        "operationId": "cluster_unassigned_cluster_unassigned_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClusterUnassignedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ClusterUnassignedResponse": {
+        "properties": {
+          "faces_considered": {
+            "type": "integer",
+            "title": "Faces Considered"
+          },
+          "clusters_found": {
+            "type": "integer",
+            "title": "Clusters Found"
+          },
+          "noise_count": {
+            "type": "integer",
+            "title": "Noise Count"
+          },
+          "cluster_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Cluster Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "faces_considered",
+          "clusters_found",
+          "noise_count",
+          "cluster_ids"
+        ],
+        "title": "ClusterUnassignedResponse"
+      },
+      "FaceResult": {
+        "properties": {
+          "face_id": {
+            "type": "integer",
+            "title": "Face Id"
+          },
+          "bbox": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Bbox"
+          },
+          "crop_path": {
+            "type": "string",
+            "title": "Crop Path"
+          },
+          "det_score": {
+            "type": "number",
+            "title": "Det Score"
+          },
+          "person_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Person Id"
+          },
+          "match_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Confidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "face_id",
+          "bbox",
+          "crop_path",
+          "det_score",
+          "person_id"
+        ],
+        "title": "FaceResult"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "model_loaded": {
+            "type": "boolean",
+            "title": "Model Loaded"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "model_loaded"
+        ],
+        "title": "HealthResponse"
+      },
+      "ProcessPhotoRequest": {
+        "properties": {
+          "photo_id": {
+            "type": "integer",
+            "title": "Photo Id"
+          },
+          "photo_path": {
+            "type": "string",
+            "title": "Photo Path"
+          }
+        },
+        "type": "object",
+        "required": [
+          "photo_id",
+          "photo_path"
+        ],
+        "title": "ProcessPhotoRequest"
+      },
+      "ProcessPhotoResponse": {
+        "properties": {
+          "photo_id": {
+            "type": "integer",
+            "title": "Photo Id"
+          },
+          "faces_detected": {
+            "type": "integer",
+            "title": "Faces Detected"
+          },
+          "faces_filtered_out": {
+            "type": "integer",
+            "title": "Faces Filtered Out"
+          },
+          "faces": {
+            "items": {
+              "$ref": "#/components/schemas/FaceResult"
+            },
+            "type": "array",
+            "title": "Faces"
+          }
+        },
+        "type": "object",
+        "required": [
+          "photo_id",
+          "faces_detected",
+          "faces_filtered_out",
+          "faces"
+        ],
+        "title": "ProcessPhotoResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
