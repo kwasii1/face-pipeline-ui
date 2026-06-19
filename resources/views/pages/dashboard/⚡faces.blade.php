@@ -15,9 +15,19 @@ class extends Component
     public ?Face $selectedFace = null;
 
     public string $tagName = '';
+    public $untaggedFaces;
+    public $taggedFaces;
+
 
     public function mount(Project $project): void
     {
+        $allFaces = Face::with('person', 'photo')
+        ->whereHas('photo', fn ($q) => $q->where('project_id', $project->id))
+        ->latest()
+        ->get();
+
+        $this->untaggedFaces = $allFaces->whereNull('person_id');
+        $this->taggedFaces = $allFaces->whereNotNull('person_id');
     }
 
     public function selectFace(string $id): void
@@ -57,15 +67,6 @@ class extends Component
 };
 ?>
 
-@php
-    $allFaces = \App\Models\Face::with('person', 'photo')
-        ->whereHas('photo', fn ($q) => $q->where('project_id', $project->id))
-        ->latest()
-        ->get();
-
-    $untaggedFaces = $allFaces->whereNull('person_id');
-    $taggedFaces = $allFaces->whereNotNull('person_id');
-@endphp
 
 <div class="p-6 max-w-4xl mx-auto">
     <h1 class="font-mono text-xl font-bold text-text-pri mb-1">Faces</h1>

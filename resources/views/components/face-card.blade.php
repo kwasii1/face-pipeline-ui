@@ -9,7 +9,7 @@
 <div
     {{ $attributes->merge(['class' => 'corner-brackets group bg-surface rounded-lg overflow-hidden border border-border hover:border-border-light transition-colors']) }}
     @class(['cursor-pointer' => $clickable])
-    @if($clickable) wire:click="$parent.selectFace('{{ $face->id }}')" @endif
+    @if($clickable) wire:click="selectFace('{{ $face->id }}')" @endif
 >
     <div class="aspect-square bg-surface-alt flex items-center justify-center">
         <img
