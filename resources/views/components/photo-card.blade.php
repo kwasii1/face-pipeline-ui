@@ -23,7 +23,7 @@
 
     <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-bg/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
         <button
-            wire:click="$parent.deletePhoto('{{ $photo->id }}')"
+            wire:click="deletePhoto('{{ $photo->id }}')"
             class="font-mono text-xs text-text-muted hover:text-accent transition-colors uppercase tracking-wider"
         >
             Delete
