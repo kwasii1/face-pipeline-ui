@@ -8,10 +8,13 @@
     --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
     --color-bg: #0A0A0A;
-    --color-surface: #161616;
+    --color-surface: #141414;
+    --color-surface-alt: #1c1c1c;
     --color-border: #2A2A2A;
+    --color-border-light: #353535;
     --color-text-pri: #F5F5F5;
     --color-text-muted: #8A8A8A;
+    --color-text-faint: #5A5A5A;
     --color-accent: #FFFFFF;
 }
 
@@ -37,5 +40,43 @@
 
     ::-webkit-scrollbar-thumb:hover {
         background: #444444;
+    }
+}
+
+@layer components {
+    .corner-brackets {
+        position: relative;
+    }
+
+    .corner-brackets::before,
+    .corner-brackets::after {
+        content: '';
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-color: #FFFFFF;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    .corner-brackets::before {
+        top: 6px;
+        left: 6px;
+        border-top: 1px solid;
+        border-left: 1px solid;
+    }
+
+    .corner-brackets::after {
+        bottom: 6px;
+        right: 6px;
+        border-bottom: 1px solid;
+        border-right: 1px solid;
+    }
+
+    .corner-brackets:hover::before,
+    .corner-brackets:hover::after {
+        opacity: 1;
     }
 }
