@@ -11,7 +11,7 @@
         @livewireStyles
     </head>
     <body
-        class="h-screen bg-cover bg-center"
+        class="h-screen bg-cover bg-center font-sans text-text-pri antialiased"
         style="background-image: url('{{ asset('river-landscape-illustration-pixel-art-style.jpg') }}')"
     >
         {{ $slot }}
