@@ -21,6 +21,8 @@ class extends Component
     {
         Photo::find($id)?->delete();
 
+        $this->photos = $this->project->photos()->withCount('faces')->latest()->get();
+
         $this->dispatch('toast', message: 'Photo deleted.', type: 'success');
     }
 };

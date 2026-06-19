@@ -2,6 +2,7 @@
     x-data="{
         toasts: [],
         add(detail) {
+            console.trace('[toast] add called', JSON.stringify(detail))
             const id = Date.now() + Math.random()
             this.toasts.push({ id, message: detail.message, type: detail.type || 'success' })
             if (this.toasts.length > 5) this.toasts.shift()
