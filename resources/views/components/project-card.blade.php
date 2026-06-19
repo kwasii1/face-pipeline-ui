@@ -25,7 +25,7 @@
         </a>
 
         <button
-            wire:click.stop="$parent.confirmDelete('{{ $project->id }}')"
+            wire:click.stop="confirmDelete('{{ $project->id }}')"
             class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity text-text-faint hover:text-accent"
         >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -14,8 +14,29 @@ class extends Component
 
     public array $selectedPersonIds = [];
 
+    public $people;
+    public $results;
+
     public function mount(Project $project): void
     {
+        $peopleQuery = $project->people();
+
+        if (! empty($search)) {
+            $peopleQuery->where('name', 'ilike', '%'.$search.'%');
+        }
+
+        $this->people = $peopleQuery->orderBy('name')->get();
+
+        $this->results = collect();
+        if (! empty($selectedPersonIds)) {
+            $query = \App\Models\Photo::where('project_id', $project->id);
+
+            foreach ($selectedPersonIds as $personId) {
+                $query->whereHas('faces', fn ($q) => $q->where('person_id', $personId));
+            }
+
+            $this->results = $query->with('faces.person')->latest()->get();
+        }
     }
 
     public function togglePerson(string $id): void
@@ -29,26 +50,7 @@ class extends Component
 };
 ?>
 
-@php
-    $peopleQuery = $project->people();
 
-    if (! empty($search)) {
-        $peopleQuery->where('name', 'ilike', '%'.$search.'%');
-    }
-
-    $people = $peopleQuery->orderBy('name')->get();
-
-    $results = collect();
-    if (! empty($selectedPersonIds)) {
-        $query = \App\Models\Photo::where('project_id', $project->id);
-
-        foreach ($selectedPersonIds as $personId) {
-            $query->whereHas('faces', fn ($q) => $q->where('person_id', $personId));
-        }
-
-        $results = $query->with('faces.person')->latest()->get();
-    }
-@endphp
 
 <div class="p-6 max-w-4xl mx-auto">
     <h1 class="font-mono text-xl font-bold text-text-pri mb-1">Folders</h1>

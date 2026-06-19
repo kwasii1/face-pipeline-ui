@@ -10,9 +10,11 @@ new
 class extends Component
 {
     public Project $project;
+    public $photos;
 
     public function mount(Project $project): void
     {
+        $this->photos = $project->photos()->withCount('faces')->latest()->get();
     }
 
     public function deletePhoto(string $id): void
@@ -24,9 +26,6 @@ class extends Component
 };
 ?>
 
-@php
-    $photos = $project->photos()->withCount('faces')->latest()->get();
-@endphp
 
 <div class="p-6 max-w-4xl mx-auto">
     <h1 class="font-mono text-xl font-bold text-text-pri mb-1">Photos</h1>

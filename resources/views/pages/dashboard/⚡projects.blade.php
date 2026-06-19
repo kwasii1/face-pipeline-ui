@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Project;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 
@@ -15,6 +16,11 @@ class extends Component
     public ?Project $deletingProject = null;
 
     public string $deleteConfirmName = '';
+
+    #[Computed()]
+    public function projects() {
+        return Project::withCount(['photos', 'faces'])->latest()->get();
+    }
 
     public function createProject(): void
     {
@@ -65,16 +71,13 @@ class extends Component
 };
 ?>
 
-@php
-    $projects = \App\Models\Project::withCount(['photos', 'faces'])->latest()->get();
-@endphp
 
 <div class="p-6 max-w-4xl mx-auto">
     <h1 class="font-mono text-xl font-bold text-text-pri mb-1">Projects</h1>
     <x-scanline-rule class="w-24 mb-8" />
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        @foreach ($projects as $project)
+        @foreach ($this->projects as $project)
             <x-project-card :project="$project" />
         @endforeach
 
@@ -154,7 +157,7 @@ class extends Component
                         </label>
                         <input
                             type="text"
-                            wire:model="deleteConfirmName"
+                            wire:model.live="deleteConfirmName"
                             wire:keydown.enter="deleteProject"
                             class="w-full bg-bg border border-border rounded px-3 py-2 font-mono text-sm text-text-pri placeholder-text-faint focus:outline-none focus:border-border-light"
                             placeholder="{{ $deletingProject->name }}"

@@ -15,9 +15,12 @@ class extends Component
     public Project $project;
 
     public $newPhotos = [];
+    public $photos;
 
     public function mount(Project $project): void
     {
+        $batch = $project->photoBatches()->latest()->first();
+        $this->photos = $batch?->photos()->latest()->get() ?? collect();
     }
 
     public function updatedNewPhotos(): void
@@ -38,10 +41,6 @@ class extends Component
 };
 ?>
 
-@php
-    $batch = $project->photoBatches()->latest()->first();
-    $photos = $batch?->photos()->latest()->get() ?? collect();
-@endphp
 
 <div class="p-6 max-w-4xl mx-auto">
     <h1 class="font-mono text-xl font-bold text-text-pri mb-1">Upload Photos</h1>
