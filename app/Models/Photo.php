@@ -7,10 +7,24 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Photo extends Model
 {
     use HasFactory, HasUuids;
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Photo $photo) {
+            $photo->loadMissing('faces');
+
+            foreach ($photo->faces as $face) {
+                Storage::disk('shared')->delete($face->crop_path);
+            }
+
+            Storage::disk('shared')->delete($photo->path);
+        });
+    }
 
     protected $fillable = [
         'project_id',

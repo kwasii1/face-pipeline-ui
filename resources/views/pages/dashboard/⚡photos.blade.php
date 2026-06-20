@@ -4,7 +4,6 @@ use App\Models\Photo;
 use App\Models\Project;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
-use Illuminate\Support\Facades\Storage;
 
 new
 #[Layout('layouts::dashboard-layout')]
@@ -23,7 +22,6 @@ class extends Component
         $photo = Photo::find($id);
 
         if ($photo) {
-            Storage::disk('shared')->delete($photo->path);
             $photo->delete();
         }
 

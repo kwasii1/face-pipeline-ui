@@ -44,22 +44,31 @@ class extends Component
 
         $name = trim($this->tagName);
 
-        $person = Person::firstOrCreate(
-            ['project_id' => $this->project->id, 'name' => $name],
-            ['project_id' => $this->project->id, 'name' => $name],
-        );
-
-        $count = 1;
+        $person = Person::firstOrCreate([
+            'project_id' => $this->project->id,
+            'name' => $name,
+        ]);
 
         if ($this->selectedFace->cluster_id) {
             $count = Face::where('cluster_id', $this->selectedFace->cluster_id)
-                ->whereNull('person_id')
-                ->update(['person_id' => $person->id]) + 1;
+                ->update([
+                    'person_id' => $person->id,
+                ]);
         } else {
-            $this->selectedFace->update(['person_id' => $person->id]);
+            $this->selectedFace->update([
+                'person_id' => $person->id,
+            ]);
+
+            $count = 1;
         }
 
-        $this->dispatch('toast', message: $count > 1 ? "{$count} faces tagged as {$name}." : "Face tagged as {$name}.", type: 'success');
+        $this->dispatch(
+            'toast',
+            message: $count > 1
+                ? "{$count} faces tagged as {$name}."
+                : "Face tagged as {$name}.",
+            type: 'success'
+        );
 
         $this->selectedFace = null;
         $this->tagName = '';

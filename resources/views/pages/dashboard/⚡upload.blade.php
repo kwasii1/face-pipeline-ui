@@ -2,6 +2,7 @@
 
 use App\Jobs\ClusterUnassignedJob;
 use App\Jobs\ProcessPhotoJob;
+use App\Jobs\ReprocessProjectJob;
 use App\Models\Photo;
 use App\Models\PhotoBatch;
 use App\Models\Project;
@@ -84,6 +85,13 @@ class extends Component
 
         $this->photos = Photo::where('batch_id', $batch->id)->latest()->get();
     }
+
+    public function retryAll(): void
+    {
+        ReprocessProjectJob::dispatch($this->project->id);
+
+        $this->dispatch('toast', message: 'Reprocessing all photos. This may take a while.', type: 'success');
+    }
 };
 ?>
 
@@ -95,7 +103,16 @@ class extends Component
     <x-dropzone accept="image/*" />
 
     @if ($photos->isNotEmpty())
-        <h2 class="font-mono text-sm font-medium text-text-pri mt-10 mb-4">Queued</h2>
+        <div class="flex items-center justify-between mt-10 mb-4">
+            <h2 class="font-mono text-sm font-medium text-text-pri">Queued</h2>
+            <button
+                wire:click="retryAll"
+                wire:confirm="Reprocess all photos from scratch? This will delete all faces, crops, and person assignments."
+                class="px-3 py-1.5 bg-accent text-bg font-mono text-xs font-medium tracking-wider uppercase hover:opacity-90 transition-opacity rounded"
+            >
+                Retry All
+            </button>
+        </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             @foreach ($photos as $photo)
