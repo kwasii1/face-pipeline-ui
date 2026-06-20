@@ -5,11 +5,14 @@ use App\Models\Project;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\WithPagination;
 
 new
 #[Layout('layouts::dashboard-layout')]
 class extends Component
 {
+    use WithPagination;
+
     public Project $project;
 
     public string $search = '';
@@ -33,7 +36,6 @@ class extends Component
         return $query->orderBy('name')->get();
     }
 
-    #[Computed()]
     public function results()
     {
         if (empty($this->selectedPersonIds)) {
@@ -46,7 +48,7 @@ class extends Component
             $query->whereHas('faces', fn ($q) => $q->where('person_id', $personId));
         }
 
-        return $query->with('faces.person')->latest()->get();
+        return $query->with('faces.person')->latest()->paginate(12);
     }
 
     public function togglePerson(string $id): void
@@ -93,29 +95,35 @@ class extends Component
             title="Select people above"
             description="Choose one or more people to find photos they appear in together."
         />
-    @elseif ($this->results->isNotEmpty())
-        <p class="font-mono text-xs text-text-muted mb-4">{{ $this->results->count() }} {{ $this->results->count() === 1 ? 'photo' : 'photos' }} found</p>
+    @else
+        @php $results = $this->results(); @endphp
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            @foreach ($this->results as $photo)
-                <div class="bg-surface rounded-lg overflow-hidden border border-border">
-                    <div class="aspect-[4/3] bg-surface-alt flex items-center justify-center">
-                        <img src="{{ Storage::disk('shared')->url($photo->path) }}" alt="" class="w-full h-full object-cover" loading="lazy" />
-                    </div>
-                    <div class="p-2">
-                        <div class="flex flex-wrap gap-1">
-                            @foreach ($photo->faces as $face)
-                                @if ($face->person)
-                                    <span class="font-mono text-[10px] text-text-muted">{{ $face->person->name }}</span>
-                                    @if (! $loop->last) <span class="text-[10px] text-text-faint">,</span> @endif
-                                @endif
-                            @endforeach
+        @if ($results->isNotEmpty())
+            <p class="font-mono text-xs text-text-muted mb-4">{{ $results->total() }} {{ $results->total() === 1 ? 'photo' : 'photos' }} found</p>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                @foreach ($results as $photo)
+                    <div class="bg-surface rounded-lg overflow-hidden border border-border">
+                        <div class="aspect-[4/3] bg-surface-alt flex items-center justify-center">
+                            <img src="{{ Storage::disk('shared')->url($photo->path) }}" alt="" class="w-full h-full object-cover" loading="lazy" />
+                        </div>
+                        <div class="p-2">
+                            <div class="flex flex-wrap gap-1">
+                                @foreach ($photo->faces as $face)
+                                    @if ($face->person)
+                                        <span class="font-mono text-[10px] text-text-muted">{{ $face->person->name }}</span>
+                                        @if (! $loop->last) <span class="text-[10px] text-text-faint">,</span> @endif
+                                    @endif
+                                @endforeach
+                            </div>
                         </div>
                     </div>
-                </div>
-            @endforeach
-        </div>
-    @else
-        <x-empty-state title="No results" description="No photos found containing all selected people." />
+                @endforeach
+            </div>
+
+            {{ $results->links('components.pagination') }}
+        @else
+            <x-empty-state title="No results" description="No photos found containing all selected people." />
+        @endif
     @endif
 </div>

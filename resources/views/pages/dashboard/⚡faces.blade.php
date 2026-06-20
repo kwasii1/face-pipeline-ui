@@ -5,29 +5,41 @@ use App\Models\Person;
 use App\Models\Project;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\WithPagination;
 
 new
 #[Layout('layouts::dashboard-layout')]
 class extends Component
 {
+    use WithPagination;
+
     public Project $project;
 
     public ?Face $selectedFace = null;
 
     public string $tagName = '';
-    public $untaggedFaces;
-    public $taggedFaces;
-
 
     public function mount(Project $project): void
     {
-        $allFaces = Face::with('person', 'photo')
-        ->whereHas('photo', fn ($q) => $q->where('project_id', $project->id))
-        ->latest()
-        ->get();
+        $this->project = $project;
+    }
 
-        $this->untaggedFaces = $allFaces->whereNull('person_id');
-        $this->taggedFaces = $allFaces->whereNotNull('person_id');
+    public function untaggedFaces()
+    {
+        return Face::with('person', 'photo')
+            ->whereHas('photo', fn ($q) => $q->where('project_id', $this->project->id))
+            ->whereNull('person_id')
+            ->latest()
+            ->paginate(24, pageName: 'untagged');
+    }
+
+    public function taggedFaces()
+    {
+        return Face::with('person', 'photo')
+            ->whereHas('photo', fn ($q) => $q->where('project_id', $this->project->id))
+            ->whereNotNull('person_id')
+            ->latest()
+            ->paginate(24, pageName: 'tagged');
     }
 
     public function selectFace(string $id): void
@@ -62,6 +74,10 @@ class extends Component
             $count = 1;
         }
 
+        $this->resetPage('untagged');
+        $this->selectedFace = null;
+        $this->tagName = '';
+
         $this->dispatch(
             'toast',
             message: $count > 1
@@ -69,9 +85,6 @@ class extends Component
                 : "Face tagged as {$name}.",
             type: 'success'
         );
-
-        $this->selectedFace = null;
-        $this->tagName = '';
     }
 };
 ?>
@@ -81,30 +94,38 @@ class extends Component
     <h1 class="font-mono text-xl font-bold text-text-pri mb-1">Faces</h1>
     <x-scanline-rule class="w-24 mb-8" />
 
+    @php $untaggedFaces = $this->untaggedFaces(); @endphp
+
     @if ($untaggedFaces->isNotEmpty())
         <h2 class="font-mono text-sm font-medium text-text-pri mb-4">
             Needs review
-            <span class="ml-2 text-xs text-text-muted">{{ $untaggedFaces->count() }}</span>
+            <span class="ml-2 text-xs text-text-muted">{{ $untaggedFaces->total() }}</span>
         </h2>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-10">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-4">
             @foreach ($untaggedFaces as $face)
                 <x-face-card :face="$face" />
             @endforeach
         </div>
+
+        {{ $untaggedFaces->links('components.pagination') }}
     @endif
 
+    @php $taggedFaces = $this->taggedFaces(); @endphp
+
     @if ($taggedFaces->isNotEmpty())
-        <h2 class="font-mono text-sm font-medium text-text-pri mb-4">
+        <h2 class="font-mono text-sm font-medium text-text-pri mt-10 mb-4">
             Tagged
-            <span class="ml-2 text-xs text-text-muted">{{ $taggedFaces->count() }}</span>
+            <span class="ml-2 text-xs text-text-muted">{{ $taggedFaces->total() }}</span>
         </h2>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-4">
             @foreach ($taggedFaces as $face)
                 <x-face-card :face="$face" />
             @endforeach
         </div>
+
+        {{ $taggedFaces->links('components.pagination') }}
     @endif
 
     @if ($untaggedFaces->isEmpty() && $taggedFaces->isEmpty())

@@ -9,23 +9,29 @@ use App\Models\Project;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Bus;
 
 new
 #[Layout('layouts::dashboard-layout')]
 class extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
 
     public Project $project;
 
     public $newPhotos = [];
-    public $photos;
 
     public function mount(Project $project): void
     {
-        $batch = $project->photoBatches()->latest()->first();
-        $this->photos = $batch?->photos()->latest()->get() ?? collect();
+        $this->project = $project;
+    }
+
+    public function photos()
+    {
+        $batch = $this->project->photoBatches()->latest()->first();
+
+        return $batch?->photos()->latest()->paginate(12) ?? collect();
     }
 
     public function updatedNewPhotos(): void
@@ -81,9 +87,8 @@ class extends Component
             ->onQueue('photos')
             ->dispatch();
 
+        $this->resetPage();
         $this->newPhotos = [];
-
-        $this->photos = Photo::where('batch_id', $batch->id)->latest()->get();
     }
 
     public function retryAll(): void
@@ -101,6 +106,8 @@ class extends Component
     <x-scanline-rule class="w-24 mb-8" />
 
     <x-dropzone accept="image/*" />
+
+    @php $photos = $this->photos(); @endphp
 
     @if ($photos->isNotEmpty())
         <div class="flex items-center justify-between mt-10 mb-4">
@@ -126,5 +133,7 @@ class extends Component
                 </div>
             @endforeach
         </div>
+
+        {{ $photos->links('components.pagination') }}
     @endif
 </div>
