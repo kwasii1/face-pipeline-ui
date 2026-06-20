@@ -12,6 +12,17 @@ class Project extends Model
 {
     use HasFactory, HasUuids;
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Project $project) {
+            $project->loadMissing('photos.faces');
+
+            foreach ($project->photos as $photo) {
+                $photo->delete();
+            }
+        });
+    }
+
     protected $fillable = [
         'name',
         'description',

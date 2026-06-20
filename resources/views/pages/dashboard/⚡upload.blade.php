@@ -78,7 +78,7 @@ class extends Component
             ->finally(function () use ($batch) {
                 ClusterUnassignedJob::dispatch($batch);
             })
-            ->onQueue('default')
+            ->onQueue('photos')
             ->dispatch();
 
         $this->newPhotos = [];

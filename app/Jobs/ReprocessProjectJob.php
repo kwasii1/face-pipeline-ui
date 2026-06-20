@@ -58,7 +58,7 @@ class ReprocessProjectJob implements ShouldQueue
             ->finally(function () use ($batch) {
                 ClusterUnassignedJob::dispatch($batch);
             })
-            ->onQueue('default')
+            ->onQueue('photos')
             ->dispatch();
     }
 }

@@ -12,6 +12,8 @@ class BatchCompleted implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    public string $broadcastQueue = 'broadcasts';
+
     public function __construct(
         public string $batchId,
         public string $projectId,
