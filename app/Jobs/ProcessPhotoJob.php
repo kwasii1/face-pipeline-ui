@@ -7,13 +7,14 @@ use App\Models\Face;
 use App\Models\Photo;
 use App\Models\PhotoBatch;
 use App\Services\FacePipelineService;
+use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Storage;
 
 class ProcessPhotoJob implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, Batchable;
 
     public function __construct(
         public PhotoBatch $batch,
@@ -24,22 +25,13 @@ class ProcessPhotoJob implements ShouldQueue
     {
         $absolutePath = Storage::disk('shared')->path($this->photo->path);
 
-        $result = $service->processPhoto(
+        $service->processPhoto(
             $this->photo->project_id,
             $this->photo->id,
             $absolutePath,
         );
 
-        foreach ($result['faces'] as $faceData) {
-            Face::create([
-                'photo_id' => $this->photo->id,
-                'person_id' => $faceData['person_id'],
-                'cluster_id' => null,
-                'bbox' => $faceData['bbox'],
-                'crop_path' => $faceData['crop_path'],
-                'det_score' => $faceData['det_score'],
-            ]);
-        }
+
 
         $this->photo->update(['status' => 'processed']);
 

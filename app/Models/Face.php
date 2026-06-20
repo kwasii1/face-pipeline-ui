@@ -20,6 +20,10 @@ class Face extends Model
         'det_score',
     ];
 
+    protected $casts = [
+        'bbox' => 'array',
+    ];
+
     public function photo(): BelongsTo
     {
         return $this->belongsTo(Photo::class);

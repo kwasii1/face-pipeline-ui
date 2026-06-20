@@ -27,7 +27,7 @@
             accept="{{ $accept }}"
             multiple
             class="hidden"
-            wire:model="newPhotos"
+            wire:model.live="newPhotos"
         />
     </label>
 </div>

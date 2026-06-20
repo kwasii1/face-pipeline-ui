@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Photo;
 use App\Models\Project;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
@@ -29,7 +30,7 @@ class extends Component
 
         $this->results = collect();
         if (! empty($selectedPersonIds)) {
-            $query = \App\Models\Photo::where('project_id', $project->id);
+            $query = Photo::where('project_id', $project->id);
 
             foreach ($selectedPersonIds as $personId) {
                 $query->whereHas('faces', fn ($q) => $q->where('person_id', $personId));

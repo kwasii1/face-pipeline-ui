@@ -64,7 +64,9 @@ return [
             'driver' => 'local',
             'root' => env('SHARED_STORAGE_PATH'),
             'url' => env('APP_URL').'/shared-storage',
+            'visibility' => 'public',
             'serve' => true,
+            'throw' => false,
         ],
 
     ],
