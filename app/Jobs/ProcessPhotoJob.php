@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Events\PhotoProcessingProgress;
-use App\Models\Face;
 use App\Models\Photo;
 use App\Models\PhotoBatch;
 use App\Services\FacePipelineService;
@@ -14,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ProcessPhotoJob implements ShouldQueue
 {
-    use Queueable, Batchable;
+    use Batchable, Queueable;
 
     public function __construct(
         public PhotoBatch $batch,
@@ -30,8 +29,6 @@ class ProcessPhotoJob implements ShouldQueue
             $this->photo->id,
             $absolutePath,
         );
-
-
 
         $this->photo->update(['status' => 'processed']);
 

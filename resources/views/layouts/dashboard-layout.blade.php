@@ -48,6 +48,7 @@
                         ['label' => 'Upload', 'route' => 'project.upload'],
                         ['label' => 'Photos', 'route' => 'project.photos'],
                         ['label' => 'Faces', 'route' => 'project.faces'],
+                        ['label' => 'People', 'route' => 'project.people'],
                         ['label' => 'Folders', 'route' => 'project.folders'],
                     ] as $item)
                         @php $isActive = $currentRoute === $item['route']; @endphp
@@ -89,6 +90,7 @@
                     ['label' => 'Overview', 'route' => 'project.overview', 'icon' => 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm0 8a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zm12 0a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z'],
                     ['label' => 'Upload', 'route' => 'project.upload', 'icon' => 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'],
                     ['label' => 'Faces', 'route' => 'project.faces', 'icon' => 'M5.121 17.804A8.004 8.004 0 0112 15c2.49 0 4.74 1.01 6.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z'],
+                    ['label' => 'People', 'route' => 'project.people', 'icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z'],
                     ['label' => 'Folders', 'route' => 'project.folders', 'icon' => 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z'],
                 ] as $item)
                     @php $isActive = $currentRoute === $item['route']; @endphp
