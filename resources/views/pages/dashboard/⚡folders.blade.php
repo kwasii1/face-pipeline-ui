@@ -2,6 +2,7 @@
 
 use App\Models\Photo;
 use App\Models\Project;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 
@@ -15,29 +16,37 @@ class extends Component
 
     public array $selectedPersonIds = [];
 
-    public $people;
-    public $results;
-
     public function mount(Project $project): void
     {
-        $peopleQuery = $project->people();
+        $this->project = $project;
+    }
 
-        if (! empty($search)) {
-            $peopleQuery->where('name', 'ilike', '%'.$search.'%');
+    #[Computed()]
+    public function people()
+    {
+        $query = $this->project->people();
+
+        if (! empty($this->search)) {
+            $query->where('name', 'ilike', '%'.$this->search.'%');
         }
 
-        $this->people = $peopleQuery->orderBy('name')->get();
+        return $query->orderBy('name')->get();
+    }
 
-        $this->results = collect();
-        if (! empty($selectedPersonIds)) {
-            $query = Photo::where('project_id', $project->id);
-
-            foreach ($selectedPersonIds as $personId) {
-                $query->whereHas('faces', fn ($q) => $q->where('person_id', $personId));
-            }
-
-            $this->results = $query->with('faces.person')->latest()->get();
+    #[Computed()]
+    public function results()
+    {
+        if (empty($this->selectedPersonIds)) {
+            return collect();
         }
+
+        $query = Photo::where('project_id', $this->project->id);
+
+        foreach ($this->selectedPersonIds as $personId) {
+            $query->whereHas('faces', fn ($q) => $q->where('person_id', $personId));
+        }
+
+        return $query->with('faces.person')->latest()->get();
     }
 
     public function togglePerson(string $id): void
@@ -50,7 +59,6 @@ class extends Component
     }
 };
 ?>
-
 
 
 <div class="p-6 max-w-4xl mx-auto">
@@ -69,9 +77,9 @@ class extends Component
         />
     </div>
 
-    @if ($people->isNotEmpty())
+    @if ($this->people->isNotEmpty())
         <div class="flex flex-wrap gap-2 mb-6">
-            @foreach ($people as $person)
+            @foreach ($this->people as $person)
                 <x-person-chip
                     :person="$person"
                     :selected="in_array($person->id, $selectedPersonIds)"
@@ -85,11 +93,11 @@ class extends Component
             title="Select people above"
             description="Choose one or more people to find photos they appear in together."
         />
-    @elseif ($results->isNotEmpty())
-        <p class="font-mono text-xs text-text-muted mb-4">{{ $results->count() }} {{ $results->count() === 1 ? 'photo' : 'photos' }} found</p>
+    @elseif ($this->results->isNotEmpty())
+        <p class="font-mono text-xs text-text-muted mb-4">{{ $this->results->count() }} {{ $this->results->count() === 1 ? 'photo' : 'photos' }} found</p>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            @foreach ($results as $photo)
+            @foreach ($this->results as $photo)
                 <div class="bg-surface rounded-lg overflow-hidden border border-border">
                     <div class="aspect-[4/3] bg-surface-alt flex items-center justify-center">
                         <img src="{{ Storage::disk('shared')->url($photo->path) }}" alt="" class="w-full h-full object-cover" loading="lazy" />

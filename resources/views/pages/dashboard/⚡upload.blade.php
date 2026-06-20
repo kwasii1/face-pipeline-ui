@@ -70,10 +70,12 @@ class extends Component
         Bus::batch($jobs)
             ->then(function () use ($batch) {
                 $batch->update(['status' => 'completed']);
-                ClusterUnassignedJob::dispatch($batch);
             })
             ->catch(function () use ($batch) {
                 $batch->update(['status' => 'failed']);
+            })
+            ->finally(function () use ($batch) {
+                ClusterUnassignedJob::dispatch($batch);
             })
             ->onQueue('default')
             ->dispatch();
