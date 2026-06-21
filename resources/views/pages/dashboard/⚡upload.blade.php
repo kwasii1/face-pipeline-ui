@@ -11,6 +11,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Bus;
+use Livewire\Attributes\Computed;
 
 new
 #[Layout('layouts::dashboard-layout')]
@@ -27,6 +28,7 @@ class extends Component
         $this->project = $project;
     }
 
+    #[Computed()]
     public function photos()
     {
         $batch = $this->project->photoBatches()->latest()->first();
@@ -107,9 +109,7 @@ class extends Component
 
     <x-dropzone accept="image/*" />
 
-    @php $photos = $this->photos(); @endphp
-
-    @if ($photos->isNotEmpty())
+    @if ($this->photos->isNotEmpty())
         <div class="flex items-center justify-between mt-10 mb-4">
             <h2 class="font-mono text-sm font-medium text-text-pri">Queued</h2>
             <button
@@ -122,7 +122,7 @@ class extends Component
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            @foreach ($photos as $photo)
+            @foreach ($this->photos as $photo)
                 <div class="relative bg-surface rounded-lg overflow-hidden border border-border">
                     <div class="aspect-[4/3] bg-surface-alt flex items-center justify-center">
                         <img src="{{ Storage::disk('shared')->url($photo->path) }}" alt="" class="w-full h-full object-cover" loading="lazy" />
@@ -134,6 +134,6 @@ class extends Component
             @endforeach
         </div>
 
-        {{ $photos->links('components.pagination') }}
+        {{ $this->photos->links('components.pagination') }}
     @endif
 </div>
