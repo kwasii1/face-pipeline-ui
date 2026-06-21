@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\BatchCompleted;
 use App\Jobs\ClusterUnassignedJob;
 use App\Jobs\ProcessPhotoJob;
 use App\Jobs\ReprocessProjectJob;
@@ -12,6 +13,7 @@ use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Bus;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 
 new
 #[Layout('layouts::dashboard-layout')]
@@ -76,9 +78,17 @@ class extends Component
         $photoChunks = Photo::whereIn('id', $photoIds)->get();
         $jobs = $photoChunks->map(fn (Photo $photo) => new ProcessPhotoJob($batch, $photo))->all();
 
+        $projectId = $this->project->id;
+
         Bus::batch($jobs)
-            ->then(function () use ($batch) {
+            ->then(function () use ($batch, $projectId) {
                 $batch->update(['status' => 'completed']);
+
+                BatchCompleted::dispatch(
+                    batchId: $batch->id,
+                    projectId: $projectId,
+                    totalPhotos: $batch->total_photos,
+                );
             })
             ->catch(function () use ($batch) {
                 $batch->update(['status' => 'failed']);
@@ -91,6 +101,12 @@ class extends Component
 
         $this->resetPage();
         $this->newPhotos = [];
+    }
+
+    #[On('echo:project.{project.id},.batch.completed')]
+    public function onBatchCompleted(): void
+    {
+        unset($this->photos);
     }
 
     public function retryAll(): void

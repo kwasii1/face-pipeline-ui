@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Events\BatchCompleted;
 use App\Models\Face;
 use App\Models\Person;
 use App\Models\PersonCentroid;
@@ -51,6 +52,12 @@ class ReprocessProjectJob implements ShouldQueue
         Bus::batch($jobs)
             ->then(function () use ($batch) {
                 $batch->update(['status' => 'completed']);
+
+                BatchCompleted::dispatch(
+                    batchId: $batch->id,
+                    projectId: $this->projectId,
+                    totalPhotos: $batch->total_photos,
+                );
             })
             ->catch(function () use ($batch) {
                 $batch->update(['status' => 'failed']);
