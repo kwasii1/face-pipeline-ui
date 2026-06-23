@@ -19,6 +19,8 @@ class extends Component
 
     public string $tagName = '';
 
+    public bool $tagOnlyThisFace = false;
+
     public function mount(Project $project): void
     {
         $this->project = $project;
@@ -46,6 +48,7 @@ class extends Component
     {
         $this->selectedFace = Face::with('person', 'photo')->find($id);
         $this->tagName = '';
+        $this->tagOnlyThisFace = false;
     }
 
     public function saveTag(): void
@@ -61,7 +64,7 @@ class extends Component
             'name' => $name,
         ]);
 
-        if ($this->selectedFace->cluster_id) {
+        if ($this->selectedFace->cluster_id && ! $this->tagOnlyThisFace) {
             $count = Face::where('cluster_id', $this->selectedFace->cluster_id)
                 ->update([
                     'person_id' => $person->id,
@@ -77,6 +80,7 @@ class extends Component
         $this->resetPage('untagged');
         $this->selectedFace = null;
         $this->tagName = '';
+        $this->tagOnlyThisFace = false;
 
         $this->dispatch(
             'toast',
@@ -165,10 +169,19 @@ class extends Component
                         />
                     </div>
 
-                    @if ($selectedFace->cluster_id && ! $selectedFace->person_id)
+                    @if ($selectedFace->cluster_id)
                         <p class="font-mono text-xs text-text-faint">
                             Part of cluster {{ $selectedFace->cluster_id }} &mdash; tagging this face will tag all faces in this cluster.
                         </p>
+
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                wire:model="tagOnlyThisFace"
+                                class="accent-accent w-4 h-4"
+                            />
+                            <span class="font-mono text-xs text-text-muted">Tag only this face</span>
+                        </label>
                     @endif
 
                     <div>

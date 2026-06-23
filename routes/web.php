@@ -12,6 +12,7 @@ Route::livewire('/projects/{project}', 'pages::dashboard.project-overview')->nam
 Route::livewire('/projects/{project}/upload', 'pages::dashboard.upload')->name('project.upload');
 Route::livewire('/projects/{project}/photos', 'pages::dashboard.photos')->name('project.photos');
 Route::livewire('/projects/{project}/faces', 'pages::dashboard.faces')->name('project.faces');
+Route::livewire('/projects/{project}/clusters', 'pages::dashboard.clusters')->name('project.clusters');
 Route::livewire('/projects/{project}/people', 'pages::dashboard.people')->name('project.people');
 Route::livewire('/projects/{project}/folders', 'pages::dashboard.folders')->name('project.folders');
 
