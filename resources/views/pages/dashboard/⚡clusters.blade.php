@@ -3,6 +3,7 @@
 use App\Models\Face;
 use App\Models\Project;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\WithPagination;
@@ -25,11 +26,16 @@ class extends Component
 
     public string $mergeTarget = '';
 
+    public bool $addingFace = false;
+
+    public ?string $addFaceId = null;
+
     public function mount(Project $project): void
     {
         $this->project = $project;
     }
 
+    #[Computed()]
     public function clusters()
     {
         $clusters = Face::whereHas('photo', fn ($q) => $q->where('project_id', $this->project->id))
@@ -72,6 +78,15 @@ class extends Component
             ->where('cluster_id', $this->selectedCluster)
             ->orderBy('blur_score', 'desc')
             ->paginate(24, pageName: 'faces');
+    }
+
+    public function unclusteredFaces()
+    {
+        return Face::with('person', 'photo')
+            ->whereHas('photo', fn ($q) => $q->where('project_id', $this->project->id))
+            ->whereNull('cluster_id')
+            ->orderBy('blur_score', 'desc')
+            ->paginate(24, pageName: 'unclustered');
     }
 
     public function selectCluster(string $clusterId): void
@@ -191,6 +206,40 @@ class extends Component
             ->values()
             ->toArray();
     }
+
+    public function startAddFace(): void
+    {
+        $this->addingFace = true;
+        $this->addFaceId = null;
+        $this->resetPage('unclustered');
+    }
+
+    public function cancelAddFace(): void
+    {
+        $this->addingFace = false;
+        $this->addFaceId = null;
+    }
+
+    public function selectAddFace(string $faceId): void
+    {
+        $this->addFaceId = $faceId;
+    }
+
+    public function addToCluster(): void
+    {
+        if (! $this->selectedCluster || ! $this->addFaceId) {
+            return;
+        }
+
+        $face = Face::find($this->addFaceId);
+
+        if ($face) {
+            $face->update(['cluster_id' => $this->selectedCluster]);
+        }
+
+        $this->dispatch('toast', message: 'Face added to cluster.', type: 'success');
+        $this->addFaceId = null;
+    }
 };
 ?>
 
@@ -220,50 +269,16 @@ class extends Component
     </div>
     <x-scanline-rule class="w-24 mb-8" />
 
-    @php $clusters = $this->clusters(); @endphp
 
-    @if ($clusters->isNotEmpty())
+    @if ($this->clusters->isNotEmpty())
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            @foreach ($clusters as $cluster)
-                <div
-                    class="group relative bg-surface rounded-lg overflow-hidden border cursor-pointer transition-colors {{ in_array($cluster->cluster_id, $mergeSelection) ? 'border-accent ring-1 ring-accent' : 'border-border hover:border-border-light' }}"
-                    wire:click="{{ empty($mergeSelection) ? "selectCluster('".$cluster->cluster_id."')" : "toggleMerge('".$cluster->cluster_id."')" }}"
-                >
-                    <div class="aspect-square bg-surface-alt flex items-center justify-center">
-                        @if ($cluster->coverFace)
-                            <img
-                                src="{{ Storage::disk('shared')->url($cluster->coverFace->crop_path) }}"
-                                alt="Face crop"
-                                class="w-full h-full object-cover"
-                                loading="lazy"
-                            />
-                        @else
-                            <span class="font-mono text-xs text-text-faint">No cover</span>
-                        @endif
-                    </div>
-
-                    <div class="p-2 border-t border-border">
-                        <p class="font-mono text-xs text-text-pri truncate">{{ $cluster->cluster_id }}</p>
-                        <p class="font-mono text-[10px] text-text-muted mt-0.5">
-                            {{ $cluster->face_count }} {{ $cluster->face_count === 1 ? 'face' : 'faces' }}
-                            @if ($cluster->tagged_count > 0)
-                                &middot; {{ $cluster->tagged_count }} tagged
-                            @endif
-                            @if ($cluster->untagged_count > 0)
-                                &middot; {{ $cluster->untagged_count }} untagged
-                            @endif
-                        </p>
-                    </div>
-
-                    <div class="absolute top-1.5 right-1.5 z-10">
-                        <input
-                            type="checkbox"
-                            wire:click.stop="toggleMerge('{{ $cluster->cluster_id }}')"
-                            @checked(in_array($cluster->cluster_id, $mergeSelection))
-                            class="accent-accent w-4 h-4 opacity-0 group-hover:opacity-100 {{ in_array($cluster->cluster_id, $mergeSelection) ? 'opacity-100' : '' }} transition-opacity"
-                        />
-                    </div>
-                </div>
+            @foreach ($this->clusters as $cluster)
+                <x-cluster-card
+                    :cluster="$cluster"
+                    :mergeSelection="$mergeSelection"
+                    :wireClick="empty($mergeSelection) ? 'selectCluster(\''.$cluster->cluster_id.'\')' : null"
+                    :wireClickMerge="'toggleMerge(\''.$cluster->cluster_id.'\')'"
+                />
             @endforeach
         </div>
     @else
@@ -288,18 +303,23 @@ class extends Component
                         <h2 class="font-mono text-sm font-medium text-text-pri">
                             {{ $selectedCluster }}
                         </h2>
-                        @php
-                            $fCount = Face::where('cluster_id', $selectedCluster)
-                                ->whereHas('photo', fn ($q) => $q->where('project_id', $project->id))
-                                ->count();
-                        @endphp
-                        <p class="font-mono text-[10px] text-text-muted mt-0.5">{{ $fCount }} {{ $fCount === 1 ? 'face' : 'faces' }}</p>
+                        <p class="font-mono text-[10px] text-text-muted mt-0.5">
+                            {{ $this->clusterFaces()->total() }} {{ $this->clusterFaces()->total() === 1 ? 'face' : 'faces' }}
+                        </p>
                     </div>
-                    <button x-on:click="open = false" class="text-text-muted hover:text-text-pri transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button
+                            wire:click="startAddFace"
+                            class="font-mono text-xs text-text-muted hover:text-text-pri transition-colors uppercase tracking-wider"
+                        >
+                            Add face
+                        </button>
+                        <button x-on:click="open = false" class="text-text-muted hover:text-text-pri transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="overflow-y-auto p-5">
@@ -459,6 +479,59 @@ class extends Component
                     >
                         Merge
                     </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if ($addingFace && $selectedCluster)
+        <div
+            x-data="{ open: true }"
+            x-show="open"
+            x-transition.opacity.duration.200ms
+            class="fixed inset-0 z-[70] flex items-center justify-center p-4"
+            style="display: none;"
+            x-cloak
+            x-init="$watch('open', v => { if(!v) $wire.cancelAddFace() })"
+        >
+            <div class="absolute inset-0 bg-bg/80 backdrop-blur-sm" x-on:click="open = false"></div>
+
+            <div class="relative z-10 w-full max-w-2xl max-h-[85vh] bg-surface border border-border rounded-lg shadow-2xl flex flex-col" x-on:click.stop="">
+                <div class="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+                    <h2 class="font-mono text-sm font-medium text-text-pri">
+                        Add face to {{ $selectedCluster }}
+                    </h2>
+                    <button x-on:click="open = false" class="text-text-muted hover:text-text-pri transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="overflow-y-auto p-5">
+                    <x-face-picker
+                        :faces="$this->unclusteredFaces()"
+                        :selectedId="$addFaceId"
+                        action="selectAddFace"
+                        emptyText="No unclustered faces available."
+                    />
+                </div>
+
+                <div class="px-5 py-4 border-t border-border shrink-0 flex justify-end gap-3">
+                    <button
+                        x-on:click="open = false"
+                        class="font-mono text-xs text-text-muted hover:text-text-pri transition-colors uppercase tracking-wider"
+                    >
+                        Close
+                    </button>
+                    @if ($addFaceId)
+                        <button
+                            wire:click="addToCluster"
+                            class="px-4 py-1.5 bg-accent text-bg font-mono text-xs font-medium tracking-wider uppercase rounded hover:opacity-90 transition-opacity"
+                        >
+                            Add selected
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>
