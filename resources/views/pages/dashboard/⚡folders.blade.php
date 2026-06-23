@@ -19,6 +19,8 @@ class extends Component
 
     public array $selectedPersonIds = [];
 
+    public array $excludedPhotoIds = [];
+
     public function mount(Project $project): void
     {
         $this->project = $project;
@@ -57,6 +59,17 @@ class extends Component
             $this->selectedPersonIds = array_values(array_filter($this->selectedPersonIds, fn ($v) => $v !== $id));
         } else {
             $this->selectedPersonIds[] = $id;
+        }
+
+        $this->excludedPhotoIds = [];
+    }
+
+    public function toggleExportPhoto(string $id): void
+    {
+        if (in_array($id, $this->excludedPhotoIds)) {
+            $this->excludedPhotoIds = array_values(array_filter($this->excludedPhotoIds, fn ($v) => $v !== $id));
+        } else {
+            $this->excludedPhotoIds[] = $id;
         }
     }
 };
@@ -99,13 +112,56 @@ class extends Component
         @php $results = $this->results(); @endphp
 
         @if ($results->isNotEmpty())
-            <p class="font-mono text-xs text-text-muted mb-4">{{ $results->total() }} {{ $results->total() === 1 ? 'photo' : 'photos' }} found</p>
+            @php
+                $total = $results->total();
+                $excluded = count($excludedPhotoIds);
+                $selected = max(0, $total - $excluded);
+                $queryParams = http_build_query(['person_ids' => $selectedPersonIds]);
+                if ($excluded > 0) {
+                    foreach ($excludedPhotoIds as $excludedId) {
+                        $queryParams .= '&excluded_ids[]=' . urlencode($excludedId);
+                    }
+                }
+                $exportUrl = route('project.folders.export', $project) . '?' . $queryParams;
+            @endphp
+            <p class="font-mono text-xs text-text-muted mb-2">{{ $total }} {{ $total === 1 ? 'photo' : 'photos' }} found</p>
+            <div class="mb-4">
+                <a
+                    href="{{ $exportUrl }}"
+                    class="inline-flex items-center gap-2 px-3 py-1.5 font-mono text-xs border border-border rounded hover:border-border-light hover:text-text-pri transition-colors text-text-muted"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Export {{ $selected }} {{ Str::plural('photo', $selected) }}
+                </a>
+            </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 @foreach ($results as $photo)
-                    <div class="bg-surface rounded-lg overflow-hidden border border-border">
-                        <div class="aspect-[4/3] bg-surface-alt flex items-center justify-center">
+                    @php $isExcluded = in_array($photo->id, $excludedPhotoIds); @endphp
+                    <div
+                        wire:click="toggleExportPhoto('{{ $photo->id }}')"
+                        @class([
+                            'bg-surface rounded-lg overflow-hidden border border-border cursor-pointer transition-opacity relative group',
+                            'opacity-40' => $isExcluded,
+                        ])
+                    >
+                        <div class="aspect-[4/3] bg-surface-alt flex items-center justify-center relative">
                             <img src="{{ Storage::disk('shared')->url($photo->path) }}" alt="" class="w-full h-full object-cover" loading="lazy" />
+                            @if ($isExcluded)
+                                <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </div>
+                            @else
+                                <div class="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <svg class="w-4 h-4 text-white drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+                            @endif
                         </div>
                         <div class="p-2">
                             <div class="flex flex-wrap gap-1">
