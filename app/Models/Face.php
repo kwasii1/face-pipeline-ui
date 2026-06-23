@@ -26,6 +26,7 @@ class Face extends Model
         'bbox',
         'crop_path',
         'det_score',
+        'blur_score',
     ];
 
     protected $casts = [

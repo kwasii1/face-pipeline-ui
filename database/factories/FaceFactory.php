@@ -20,6 +20,7 @@ class FaceFactory extends Factory
             'bbox' => null,
             'crop_path' => fake()->filePath(),
             'det_score' => fake()->randomFloat(4, 0.5, 0.99),
+            'blur_score' => fake()->randomFloat(4, 0, 100),
         ];
     }
 

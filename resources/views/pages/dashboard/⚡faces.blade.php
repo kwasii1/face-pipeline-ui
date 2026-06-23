@@ -29,7 +29,7 @@ class extends Component
         return Face::with('person', 'photo')
             ->whereHas('photo', fn ($q) => $q->where('project_id', $this->project->id))
             ->whereNull('person_id')
-            ->latest()
+            ->orderBy('blur_score', 'desc')
             ->paginate(24, pageName: 'untagged');
     }
 
@@ -38,7 +38,7 @@ class extends Component
         return Face::with('person', 'photo')
             ->whereHas('photo', fn ($q) => $q->where('project_id', $this->project->id))
             ->whereNotNull('person_id')
-            ->latest()
+            ->orderBy('blur_score', 'desc')
             ->paginate(24, pageName: 'tagged');
     }
 
@@ -104,6 +104,7 @@ class extends Component
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-4">
             @foreach ($untaggedFaces as $face)
+            {{ $face->det_score }}
                 <x-face-card :face="$face" />
             @endforeach
         </div>
