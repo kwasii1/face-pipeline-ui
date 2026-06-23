@@ -104,7 +104,6 @@ class extends Component
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-4">
             @foreach ($untaggedFaces as $face)
-            {{ $face->det_score }}
                 <x-face-card :face="$face" />
             @endforeach
         </div>
