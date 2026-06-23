@@ -1,10 +1,15 @@
 @props(['accept' => 'image/*'])
 
 <div
-    x-data="{ dragging: false }"
+    x-data="{ dragging: false, uploading: false, progress: 0 }"
     x-on:dragover.prevent="dragging = true"
     x-on:dragleave.prevent="dragging = false"
     x-on:drop.prevent="dragging = false; $refs.input.files = $event.dataTransfer.files; $refs.input.dispatchEvent(new Event('change'))"
+    x-on:livewire-upload-start="uploading = true; progress = 0"
+    x-on:livewire-upload-finish="uploading = false"
+    x-on:livewire-upload-cancel="uploading = false"
+    x-on:livewire-upload-error="uploading = false"
+    x-on:livewire-upload-progress="progress = $event.detail.progress"
     class="relative"
 >
     <label
@@ -30,4 +35,13 @@
             wire:model.live="newPhotos"
         />
     </label>
+
+    <div x-show="uploading" class="mt-3">
+        <progress
+            max="100"
+            x-bind:value="progress"
+            class="w-full h-1.5 rounded-full [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-surface-alt [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-accent [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-accent"
+        ></progress>
+        <p class="font-mono text-xs text-text-muted mt-1 text-center" x-text="'Uploading... ' + Math.round(progress) + '%'"></p>
+    </div>
 </div>
