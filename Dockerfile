@@ -36,7 +36,8 @@ RUN docker-php-ext-install -j$(nproc) \
         opcache \
         zip \
         intl \
-        bcmath
+        bcmath \
+        pcntl
 
 # Install Redis via PECL (requires build toolchain)
 RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS linux-headers \
