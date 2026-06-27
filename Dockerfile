@@ -28,18 +28,21 @@ RUN apk add --no-cache \
     libzip-dev \
     icu-dev \
     oniguruma-dev \
-    linux-headers \
     && rm -rf /var/cache/apk/*
 
-# Install PHP extensions
+# Install PHP extensions bundled with PHP
 RUN docker-php-ext-install -j$(nproc) \
         pdo_pgsql \
         opcache \
         zip \
         intl \
-        bcmath \
+        bcmath
+
+# Install Redis via PECL (requires build toolchain)
+RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS linux-headers \
     && pecl install redis \
-    && docker-php-ext-enable redis opcache
+    && docker-php-ext-enable redis \
+    && apk del .build-deps
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
