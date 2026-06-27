@@ -6,6 +6,18 @@
 
         <title>{{ $title ?? config('app.name') }}</title>
 
+        @php
+            $reverbConfig = [
+                'key' => config('reverb.apps.apps.0.key'),
+                'host' => config('reverb.apps.apps.0.options.host'),
+                'port' => config('reverb.apps.apps.0.options.port'),
+                'scheme' => config('reverb.apps.apps.0.options.scheme'),
+            ];
+        @endphp
+        <script>
+            window.reverbConfig = {{ Illuminate\Support\Js::from($reverbConfig) }};
+        </script>
+
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         @livewireStyles
