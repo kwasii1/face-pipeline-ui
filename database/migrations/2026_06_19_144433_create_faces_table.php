@@ -9,6 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        Schema::ensureVectorExtensionExists();
         Schema::create('faces', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('photo_id')->constrained()->cascadeOnDelete();
