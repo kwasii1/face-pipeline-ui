@@ -25,9 +25,6 @@ RUN apk add --no-cache \
     nginx \
     supervisor \
     postgresql-dev \
-    libpng-dev \
-    libjpeg-turbo-dev \
-    freetype-dev \
     libzip-dev \
     icu-dev \
     oniguruma-dev \
@@ -35,15 +32,12 @@ RUN apk add --no-cache \
     && rm -rf /var/cache/apk/*
 
 # Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) \
+RUN docker-php-ext-install -j$(nproc) \
         pdo_pgsql \
         opcache \
-        gd \
         zip \
         intl \
         bcmath \
-        exif \
     && pecl install redis \
     && docker-php-ext-enable redis opcache
 
