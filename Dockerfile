@@ -188,6 +188,10 @@ http {
             deny all;
         }
 
+        location ^~ /livewire/ {
+            try_files $uri /index.php?$query_string;
+        }
+
         location ~* \.(?:css|js|map|jpg|jpeg|gif|png|ico|svg|woff2?|ttf|eot)$ {
             expires 1y;
             access_log off;
