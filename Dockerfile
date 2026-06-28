@@ -6,12 +6,11 @@ FROM node:22-alpine AS frontend
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-
 RUN npm ci --no-audit --no-fund
 
 COPY vite.config.js ./
-COPY resources/css/ resources/css/
-COPY resources/js/ resources/js/
+COPY resources/ resources/
+COPY app/ app/
 
 RUN npm run build
 
