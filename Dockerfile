@@ -179,6 +179,10 @@ http {
         location = /favicon.ico { access_log off; log_not_found off; }
         location = /robots.txt  { access_log off; log_not_found off; }
 
+        location ^~ /shared-storage/ {
+            try_files $uri /index.php?$query_string;
+        }
+
         error_page 404 /index.php;
 
         location ~ \.php$ {
