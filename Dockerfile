@@ -300,6 +300,14 @@ COPY <<-'ENTRYPOINT' /usr/local/bin/docker-entrypoint.sh
 #!/bin/sh
 set -e
 
+# Ensure shared storage is writable by the app user (named volumes are
+# created root-owned by the Docker daemon on first use)
+SHARED_DIR="${SHARED_STORAGE_PATH:-/shared-storage}"
+mkdir -p "$SHARED_DIR"
+if [ "$(stat -c '%U' "$SHARED_DIR")" != "www-data" ]; then
+    chown -R www-data:www-data "$SHARED_DIR"
+fi
+
 # Cache Laravel bootstrap files (run once, regardless of role)
 php artisan config:cache
 php artisan route:cache
