@@ -92,6 +92,15 @@ opcache.revalidate_freq=2
 opcache.enable_cli=1
 PHPINI
 
+COPY <<-'PHPINI' /usr/local/etc/php/conf.d/zz-uploads.ini
+post_max_size = 300M
+upload_max_filesize = 300M
+max_file_uploads = 100
+memory_limit = 512M
+max_execution_time = 120
+max_input_time = 120
+PHPINI
+
 # ── PHP-FPM pool configuration ──────────────────────────────────────────────
 COPY <<-'FPMCONF' /usr/local/etc/php-fpm.d/zz-docker.conf
 [www]
@@ -188,8 +197,8 @@ http {
             deny all;
         }
 
-        location ^~ /livewire/ {
-            try_files $uri /index.php?$query_string;
+        location ~ ^/livewire-[a-f0-9]+/ {
+            try_files $uri $uri/ /index.php?$query_string;
         }
 
         location ~* \.(?:css|js|map|jpg|jpeg|gif|png|ico|svg|woff2?|ttf|eot)$ {
