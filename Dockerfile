@@ -79,6 +79,11 @@ RUN mkdir -p \
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
+# CHANGED: add www-data to a "shared" group with the same fixed GID
+# used in the face-pipeline (FastAPI) image
+RUN addgroup -g 9999 shared 2>/dev/null || true \
+    && adduser www-data shared
+
 # ── PHP configuration ───────────────────────────────────────────────────────
 RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
 
@@ -181,6 +186,9 @@ http {
 
         location ^~ /shared-storage/ {
             try_files $uri /index.php?$query_string;
+            expires 1y;
+            access_log off;
+            add_header Cache-Control "public, immutable";
         }
 
         error_page 404 /index.php;
@@ -300,13 +308,14 @@ COPY <<-'ENTRYPOINT' /usr/local/bin/docker-entrypoint.sh
 #!/bin/sh
 set -e
 
-# Ensure shared storage is writable by the app user (named volumes are
-# created root-owned by the Docker daemon on first use)
+# Ensure shared storage is writable by the app user/group (named volumes
+# are created root-owned by the Docker daemon on first use, and the
+# FastAPI sidecar may also create subdirectories here)
 SHARED_DIR="${SHARED_STORAGE_PATH:-/shared-storage}"
 mkdir -p "$SHARED_DIR"
-if [ "$(stat -c '%U' "$SHARED_DIR")" != "www-data" ]; then
-    chown -R www-data:www-data "$SHARED_DIR"
-fi
+chgrp -R shared "$SHARED_DIR" 2>/dev/null || true
+chmod -R g+rwX "$SHARED_DIR" 2>/dev/null || true
+find "$SHARED_DIR" -type d -exec chmod g+s {} + 2>/dev/null || true
 
 # Cache Laravel bootstrap files (run once, regardless of role)
 php artisan config:cache
